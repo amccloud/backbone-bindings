@@ -54,7 +54,7 @@
                     return;
 
                 // Event key for model attribute changes.
-                var setTrigger = 'change:' + attribute,
+                var setTrigger = 'change:' + attribute;
                     // Event keys for view.$el namespaced to the view for unbinding.
                     getTrigger = _.reduce(accessors.get[0].split(' '), function(memo, event) {
                         return memo + ' ' + event + '.modelBinding' + this.cid;
@@ -62,22 +62,24 @@
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...
-                var set = _.bind(function(model, value) {
+                var set = _.bind(function(model, value, options) {
+                    // Skip if this callback was bound to the element that
+                    // triggered the callback.
+                    if (options && options.el == el)
+                        return;
+
+                    // Set the property value for the binder's element.
                     accessors.set.call(el, value);
                 }, this);
 
-                // ...and 'get' for binding to DOM events.
+                // ...and 'get' callback for binding to DOM events.
                 var get = _.bind(function(event) {
+                    // Get the property value from the binder's element.
                     var value = accessors.get[1].call(el);
-
-                    // Silently set the new value for the attribute skipping the event...
+       
                     this.model.set(attribute, value, {
-                        silent: true
+                        el: this.$(event.srcElement)
                     });
-
-                    // ...and manually triggering an update.
-                    if (accessors.set)
-                        set(this.model, value);
                 }, this);
 
                 if (accessors.set) {
