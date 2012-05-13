@@ -19,9 +19,15 @@
             this.unbindModel();
 
             _.each(bindings, function(attribute, binding) {
+                if (!_.isArray(attribute))
+                    attribute = [attribute, [null, null]];
+
+                if (!_.isArray(attribute[1]))
+                    attribute[1] = [attribute[1], null];
+
                 // Check to see if a binding is already bound to another attribute.
                 if (this._bindings[binding])
-                    throw new Error("'" + binding + "' is already bound to '" + attribute + "'.");
+                    throw new Error("'" + binding + "' is already bound to '" + attribute[0] + "'.");
 
                 // Split bindings just like Backbone.View.events where the first half
                 // is the property you want to bind to and the remainder is the selector
@@ -40,7 +46,7 @@
                     // 'set' must be a function and has one argument. `get` can either be
                     // a function or a list [events, function] .The context of both set and
                     // get is the views's $el.
-                    accessors = binder.call(this, this.model, attribute, property);
+                    accessors = binder.call(this, this.model, attribute[0], property);
 
                 if (!accessors)
                     return;
@@ -54,11 +60,15 @@
                     return;
 
                 // Event key for model attribute changes.
-                var setTrigger = 'change:' + attribute;
+                var setTrigger = 'change:' + attribute[0];
                     // Event keys for view.$el namespaced to the view for unbinding.
                     getTrigger = _.reduce(accessors.get[0].split(' '), function(memo, event) {
                         return memo + ' ' + event + '.modelBinding' + this.cid;
                     }, '', this);
+
+                // Default to identity transformer if not provided for attribute.
+                var setTransformer = attribute[1][0] || identityTransformer,
+                    getTransformer = attribute[1][1] || identityTransformer;
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...
@@ -69,15 +79,16 @@
                         return;
 
                     // Set the property value for the binder's element.
-                    accessors.set.call(el, value);
+                    accessors.set.call(el, setTransformer(value));
                 }, this);
 
                 // ...and 'get' callback for binding to DOM events.
                 var get = _.bind(function(event) {
                     // Get the property value from the binder's element.
-                    var value = accessors.get[1].call(el);
-       
-                    this.model.set(attribute, value, {
+                    // console.log(attribute[0], getTransformer);
+                    var value = getTransformer(accessors.get[1].call(el));
+
+                    this.model.set(attribute[0], value, {
                         el: this.$(event.srcElement)
                     });
                 }, this);
@@ -86,7 +97,7 @@
                     this.model.on(setTrigger, set);
                     // Trigger the initial set callback manually so that the view is up
                     // to date with the model bound to it.
-                    set(this.model, this.model.get(attribute));
+                    set(this.model, this.model.get(attribute[0]));
                 }
 
                 if (accessors.get[1])
@@ -156,8 +167,11 @@
         'class': function(model, attribute, property) {
             return {
                 set: function(value) {
-                    this.removeClass(model.previous(attribute));
+                    if (this._previousClass)
+                        this.removeClass(this._previousClass);
+
                     this.addClass(value);
+                    this._previousClass = value;
                 }
             };
         },
@@ -178,6 +192,10 @@
                 }
             };
         }
+    };
+
+    var identityTransformer = function(value) {
+        return value;
     };
 
     // Helper function from Backbone to get a value from a Backbone
