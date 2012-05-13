@@ -65,7 +65,7 @@
                 var set = _.bind(function(model, value, options) {
                     // Skip if this callback was bound to the element that
                     // triggered the callback.
-                    if (options && options.el.get(0) == el.get(0))
+                    if (options && options.el && options.el.get(0) == el.get(0))
                         return;
 
                     // Set the property value for the binder's element.
