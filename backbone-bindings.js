@@ -68,7 +68,9 @@
 
                 // ...and 'get' for binding to DOM events.
                 var get = _.bind(function(event) {
-                    this.model.set(attribute, accessors.get[1].call(el));
+                    this.model.set(attribute, accessors.get[1].call(el), {
+                        silent: true
+                    });
                 }, this);
 
                 if (accessors.set) {
