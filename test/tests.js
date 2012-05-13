@@ -58,7 +58,7 @@ test("get bindings", 3, function() {
     logView.$('h1.name').text("Yellow Curry").trigger('change');
     equal(meal.get('name'), logView.$('h1.name').text());
 
-    logView.$('input[name="notes"]').val("Best i've eve").trigger('keypress');
+    logView.$('input[name="notes"]').val("Best i've eve").trigger('keyup');
     equal(meal.get('notes'), logView.$('input[name="notes"]').val());
 
     logView.$('input[name="tried"]').prop('checked', true).trigger('change');

@@ -45,7 +45,7 @@ logView.$('input[name="tried"]').prop('checked') // true
 
 // From view to model. (Note: The event is manually triggered here the browser would handle this normally.)
 logView.$('h1.name').text("Yellow Curry").trigger('change');
-logView.$('input[name="notes"]').val("Best i've eve").trigger('keypress');
+logView.$('input[name="notes"]').val("Best i've eve").trigger('keyup');
 logView.$('input[name="tried"]').prop('checked', false).trigger('change');
 
 meal.get('name') // "Yellow Curry"

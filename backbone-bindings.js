@@ -125,7 +125,7 @@
     Backbone.View.Binders = {
         'value': function(model, attribute, property) {
             return {
-                get: ['change keypress', function() {
+                get: ['change keyup', function() {
                     return this.val();
                 }],
                 set: function(value) {
