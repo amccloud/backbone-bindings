@@ -68,9 +68,16 @@
 
                 // ...and 'get' for binding to DOM events.
                 var get = _.bind(function(event) {
-                    this.model.set(attribute, accessors.get[1].call(el), {
+                    var value = accessors.get[1].call(el);
+
+                    // Silently set the new value for the attribute skipping the event...
+                    this.model.set(attribute, value, {
                         silent: true
                     });
+
+                    // ...and manually triggering an update.
+                    if (accessors.set)
+                        set(this.model, value);
                 }, this);
 
                 if (accessors.set) {
