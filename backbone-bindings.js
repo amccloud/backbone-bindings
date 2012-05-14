@@ -40,7 +40,7 @@
                     el = (selector) ? this.$(selector) : this.$el,
                     // Finder binder definition for binding by property. If it can't be found
                     // default to property 'attr'.
-                    binder = Backbone.View.Binders[property] || Backbone.View.Binders['attr'],
+                    binder = Backbone.View.Binders[property] || Backbone.View.Binders['__attr__'],
                     // Fetch accessors from binder. The context of the binder is the view
                     // and binder should return an object that has 'set' and or 'get' keys.
                     // 'set' must be a function and has one argument. `get` can either be
@@ -185,7 +185,7 @@
                 }
             };
         },
-        'attr': function(model, attribute, property) {
+        '__attr__': function(model, attribute, property) {
             return {
                 set: function(value) {
                     this.attr(property, value);
