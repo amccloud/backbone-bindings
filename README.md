@@ -50,18 +50,16 @@ element to that value.
 
 #### Example ####
 ```javascript
-_.extend(Backbone.View.Binders, {
-    'mycustom': function(model, attribute, property) {
-        return {
-            get: function() {
-                return this.css('background');
-            },
-            set: function(value) {
-                this.css('background', value);
-            }
-        };
-    }
-});
+Backbone.View.Binders['mycustom'] = function(model, attribute, property) {
+    return {
+        get: function() {
+            return this.css('background');
+        },
+        set: function(value) {
+            this.css('background', value);
+        }
+    };
+};
 
 var MealLogView = Backbone.View.extend({
     bindings: {
