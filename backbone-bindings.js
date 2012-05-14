@@ -79,14 +79,14 @@
                         return;
 
                     // Set the property value for the binder's element.
-                    accessors.set.call(el, setTransformer(value));
+                    accessors.set.call(el, setTransformer.call(this, value));
                 }, this);
 
                 // ...and 'get' callback for binding to DOM events.
                 var get = _.bind(function(event) {
                     // Get the property value from the binder's element.
                     // console.log(attribute[0], getTransformer);
-                    var value = getTransformer(accessors.get[1].call(el));
+                    var value = getTransformer.call(this, accessors.get[1].call(el));
 
                     this.model.set(attribute[0], value, {
                         el: this.$(event.srcElement)
