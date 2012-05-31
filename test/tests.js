@@ -25,7 +25,7 @@ var Meal = Backbone.Model.extend({}),
         }
     });
 
-test("set bindings", 8, function() {
+test("set bindings", function() {
     var meal = new Meal({
         category: "Fast Food",
         name: "Coney",
@@ -57,7 +57,7 @@ test("set bindings", 8, function() {
     equal(logView.$('input[name="tried"]').prop('checked'), false);
 });
 
-test("get bindings", 3, function() {
+test("get bindings", function() {
     var meal = new Meal();
 
     var logView = new MealLog({
@@ -74,4 +74,24 @@ test("get bindings", 3, function() {
 
     logView.$('input[name="tried"]').prop('checked', true).trigger('change');
     equal(meal.get('tried'), yesNoTransformer[1](true));
+});
+
+
+test("unbinding", function() {
+    var meal = new Meal({
+        category: "Fast Food",
+        name: "Coney",
+        notes: "Delish!",
+        tried: "yes"
+    });
+
+    var logView = new MealLog({
+        model: meal
+    });
+
+    logView.render();
+    notDeepEqual(logView._bindings, undefined);
+
+    logView.unbindModel();
+    deepEqual(logView._bindings, {});
 });

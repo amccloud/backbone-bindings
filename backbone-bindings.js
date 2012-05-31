@@ -119,14 +119,14 @@
             if (!this._bindings || !this.model)
                 return;
 
-            _.each(this._bindings, function(binding) {
+            _.each(this._bindings, function(binding, key) {
                 if (binding.get[1])
                     this.$el.off(binding.getTrigger);
 
                 if (binding.set)
                     this.model.off(binding.setTrigger, binding.set);
 
-                delete this._bindings[binding];
+                delete this._bindings[key];
             }, this);
 
             return this;
