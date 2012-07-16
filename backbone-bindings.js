@@ -101,7 +101,7 @@
                 }
 
                 if (accessors.get[1])
-                    this.$el.on(getTrigger, get);
+                    el.on(getTrigger, get);
 
                 // Save a reference to binding so that we can unbind it later.
                 this._bindings[binding] = {
