@@ -60,7 +60,7 @@
                     return;
 
                 // Event key for model attribute changes.
-                var setTrigger = 'change:' + attribute[0];
+                var setTrigger = 'change:' + attribute[0],
                     // Event keys for view.$el namespaced to the view for unbinding.
                     getTrigger = _.reduce(accessors.get[0].split(' '), function(memo, event) {
                         return memo + ' ' + event + '.modelBinding' + this.cid;
