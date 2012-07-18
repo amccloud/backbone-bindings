@@ -120,6 +120,10 @@
                 return;
 
             _.each(this._bindings, function(binding, key) {
+                var match = binding.match(bindingSplitter),
+                    property = match[1],
+                    selector = match[2];
+                    
                 if (binding.get[1])
                     this.$el.off(binding.getTrigger);
 
