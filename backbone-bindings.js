@@ -60,7 +60,7 @@
                     return;
 
                 // Event key for model attribute changes.
-                var setTrigger = 'change:' + attribute[0];
+                var setTrigger = 'change:' + attribute[0],
                     // Event keys for view.$el namespaced to the view for unbinding.
                     getTrigger = _.reduce(accessors.get[0].split(' '), function(memo, event) {
                         return memo + ' ' + event + '.modelBinding' + this.cid;
@@ -101,10 +101,11 @@
                 }
 
                 if (accessors.get[1])
-                    this.$el.on(getTrigger, get);
+                    this.$el.on(getTrigger, selector, get);
 
                 // Save a reference to binding so that we can unbind it later.
                 this._bindings[binding] = {
+                    selector: selector,
                     getTrigger: getTrigger,
                     setTrigger: setTrigger,
                     get: get,
@@ -121,7 +122,7 @@
 
             _.each(this._bindings, function(binding, key) {
                 if (binding.get[1])
-                    this.$el.off(binding.getTrigger);
+                    this.$el.off(binding.getTrigger, binding.selector);
 
                 if (binding.set)
                     this.model.off(binding.setTrigger, binding.set);
