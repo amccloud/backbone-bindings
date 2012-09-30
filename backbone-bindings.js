@@ -165,6 +165,16 @@
                 }
             };
         },
+        'radio': function(model, attribute, property){
+            return {
+                get: ['change', function(){
+                    return this.find('input:checked').val();
+                }],
+                set: function(value){
+                    this.find(":radio[value="+value+"]").attr('checked', true);
+                }
+            };
+        },
         'class': function(model, attribute, property) {
             return {
                 set: function(value) {
