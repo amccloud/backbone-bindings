@@ -20,10 +20,10 @@
 
             _.each(bindings, function(attribute, binding) {
                 if (!_.isArray(attribute))
-                    attribute = [attribute, [null, null]];
+                    attribute = [attribute, {}];
 
-                if (!_.isArray(attribute[1]))
-                    attribute[1] = [attribute[1], null];
+                if (_.isFunction(attribute[1]))
+                    attribute[1] = {set:attribute[1]};
 
                 // Check to see if a binding is already bound to another attribute.
                 if (this._bindings[binding])
@@ -67,8 +67,8 @@
                     }, '', this);
 
                 // Default to identity transformer if not provided for attribute.
-                var setTransformer = attribute[1][0] || identityTransformer,
-                    getTransformer = attribute[1][1] || identityTransformer;
+                var setTransformer = attribute[1].set || identityTransformer,
+                    getTransformer = attribute[1].get || identityTransformer;
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...

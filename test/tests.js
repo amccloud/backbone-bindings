@@ -3,11 +3,14 @@ var categoryTransformer = function(value) {
         return value.toLowerCase().replace(/ /g, '');
 };
 
-var yesNoTransformer = [function(value) {
-    return value === "yes";
-}, function(value) {
-    return (value) ? "yes" : "no";
-}];
+var yesNoTransformer = {
+    set: function(value) {
+        return value === "yes";
+    },
+    get: function(value) {
+        return (value) ? "yes" : "no";
+    }
+};
 
 var Meal = Backbone.Model.extend({}),
     MealLog = Backbone.View.extend({
@@ -38,7 +41,7 @@ test("set bindings", function() {
     });
 
     logView.render();
-
+    
     equal(logView.$el.attr('class'), categoryTransformer(meal.get('category')));
     equal(logView.$('h1.name').text(), meal.get('name'));
     equal(logView.$('input[name="notes"]').val(), meal.get('notes'));
@@ -73,7 +76,7 @@ test("get bindings", function() {
     equal(meal.get('notes'), logView.$('input[name="notes"]').val());
 
     logView.$('input[name="tried"]').prop('checked', true).trigger('change');
-    equal(meal.get('tried'), yesNoTransformer[1](true));
+    equal(meal.get('tried'), yesNoTransformer.get(true));
 });
 
 
