@@ -2,14 +2,14 @@
     var bindingSplitter = /^(\S+)\s*(.*)$/;
 
     _.extend(Backbone.View.prototype, {
-        bindModel: function(bindings) {
+        bindModel: function(model, bindings) {
             // Bindings can be defined three different ways. It can be
             // defined on the view as an object or function under the key
             // 'bindings', or as an object passed to bindModel.
             bindings = bindings || getValue(this, 'bindings');
 
             // Skip if no bindings can be found or if the view has no model.
-            if (!bindings || !this.model)
+            if (!bindings || (!model && !this.model))
                 return;
 
             // Create the private bindings map if it doesn't exist.
@@ -17,6 +17,8 @@
 
             // Clear any previous bindings for view.
             this.unbindModel();
+
+	    this._bindModel = model || this.model;
 
             _.each(bindings, function(attribute, binding) {
                 if (!_.isArray(attribute))
@@ -46,7 +48,7 @@
                     // 'set' must be a function and has one argument. `get` can either be
                     // a function or a list [events, function] .The context of both set and
                     // get is the views's $el.
-                    accessors = binder.call(this, this.model, attribute[0], property);
+                    accessors = binder.call(this, this._bindModel, attribute[0], property);
 
                 if (!accessors)
                     return;
@@ -72,7 +74,7 @@
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...
-                var set = _.bind(function(model, value, options) {
+                var set = _.bind(function(mod, value, options) {
                     // Skip if this callback was bound to the element that
                     // triggered the callback.
                     if (options && options.el && options.el.get(0) == el.get(0))
@@ -88,7 +90,7 @@
                     // console.log(attribute[0], getTransformer);
                     var value = getTransformer.call(this, accessors.get[1].call(el));
 
-                    this.model.set(attribute[0], value, {
+                    this._bindModel.set(attribute[0], value, {
                         el: this.$(event.srcElement)
                     });
                 }, this);
@@ -97,11 +99,11 @@
                     this.model.on(setTrigger, set);
                     // Trigger the initial set callback manually so that the view is up
                     // to date with the model bound to it.
-                    set(this.model, this.model.get(attribute[0]));
+                    set(this._bindModel, this._bindModel.get(attribute[0]));
                 }
 
                 if (accessors.get[1])
-                    this.el.on(getTrigger, selector, get);
+                    el.on(getTrigger, get);
 
                 // Save a reference to binding so that we can unbind it later.
                 this._bindings[binding] = {
@@ -117,7 +119,7 @@
         },
         unbindModel: function() {
             // Skip if view has been bound or doesn't have a model.
-            if (!this._bindings || !this.model)
+            if (!this._bindings || !this._bindModel)
                 return;
 
             _.each(this._bindings, function(binding, key) {
@@ -125,7 +127,7 @@
                     this.$el.off(binding.getTrigger, binding.selector);
 
                 if (binding.set)
-                    this.model.off(binding.setTrigger, binding.set);
+                    this._bindModel.off(binding.setTrigger, binding.set);
 
                 delete this._bindings[key];
             }, this);

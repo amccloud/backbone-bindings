@@ -25,76 +25,91 @@ var Meal = Backbone.Model.extend({}),
         render: function() {
             this.$el.html(this.template());
             return this.bindModel();
+        },
+
+        renderGiven: function(){
+            this.$el.html(this.template());
+            return this.bindModel(this.model, this.bindings);
         }
     });
 
-test("set bindings", function() {
-    var meal = new Meal({
-        category: "Fast Food",
-        name: "Coney",
-        notes: "Delish!",
-        tried: "yes"
+
+var methods = ['render', 'renderGiven'];
+
+for(var i in methods){
+    var method = methods[i];
+
+    test("set bindings with "+method, function() {
+        var meal = new Meal({
+            category: "Fast Food",
+            name: "Coney",
+            notes: "Delish!",
+            tried: "yes"
+        });
+
+        var logView = new MealLog({
+            model: meal
+        });
+
+        logView[method]();
+        
+        equal(logView.$el.attr('class'), categoryTransformer(meal.get('category')));
+        equal(logView.$('h1.name').text(), meal.get('name'));
+        equal(logView.$('input[name="notes"]').val(), meal.get('notes'));
+        equal(logView.$('input[name="tried"]').prop('checked'), true);
+
+        meal.set({
+            category: "Seafood",
+            name: "Jumbo Shrimp",
+            notes: "",
+            tried: "no"
+        });
+
+        equal(logView.$el.attr('class'), categoryTransformer(meal.get('category')));
+        equal(logView.$('h1.name').text(), meal.get('name'));
+        equal(logView.$('input[name="notes"]').val(), meal.get('notes'));
+        equal(logView.$('input[name="tried"]').prop('checked'), false);
+        
     });
 
-    var logView = new MealLog({
-        model: meal
+    test("get bindings with "+method, function() {
+        var meal = new Meal();
+
+        var logView = new MealLog({
+            model: meal
+        });
+
+        logView[method]();
+
+        logView.$('h1.name').text("Yellow Curry").trigger('change');
+        equal(meal.get('name'), logView.$('h1.name').text());
+
+        logView.$('input[name="notes"]').val("Best i've eve").trigger('keyup');
+        equal(meal.get('notes'), logView.$('input[name="notes"]').val());
+
+        logView.$('input[name="tried"]').prop('checked', true).trigger('change');
+        equal(meal.get('tried'), yesNoTransformer.get(true));
     });
 
-    logView.render();
-    
-    equal(logView.$el.attr('class'), categoryTransformer(meal.get('category')));
-    equal(logView.$('h1.name').text(), meal.get('name'));
-    equal(logView.$('input[name="notes"]').val(), meal.get('notes'));
-    equal(logView.$('input[name="tried"]').prop('checked'), true);
 
-    meal.set({
-        category: "Seafood",
-        name: "Jumbo Shrimp",
-        notes: "",
-        tried: "no"
+    test("unbinding with "+method, function() {
+        var meal = new Meal({
+            category: "Fast Food",
+            name: "Coney",
+            notes: "Delish!",
+            tried: "yes"
+        });
+
+        var logView = new MealLog({
+            model: meal
+        });
+
+        logView[method]();
+        notDeepEqual(logView._bindings, undefined);
+
+        logView.unbindModel();
+        deepEqual(logView._bindings, {});
     });
 
-    equal(logView.$el.attr('class'), categoryTransformer(meal.get('category')));
-    equal(logView.$('h1.name').text(), meal.get('name'));
-    equal(logView.$('input[name="notes"]').val(), meal.get('notes'));
-    equal(logView.$('input[name="tried"]').prop('checked'), false);
-});
 
-test("get bindings", function() {
-    var meal = new Meal();
-
-    var logView = new MealLog({
-        model: meal
-    });
-
-    logView.render();
-
-    logView.$('h1.name').text("Yellow Curry").trigger('change');
-    equal(meal.get('name'), logView.$('h1.name').text());
-
-    logView.$('input[name="notes"]').val("Best i've eve").trigger('keyup');
-    equal(meal.get('notes'), logView.$('input[name="notes"]').val());
-
-    logView.$('input[name="tried"]').prop('checked', true).trigger('change');
-    equal(meal.get('tried'), yesNoTransformer.get(true));
-});
-
-
-test("unbinding", function() {
-    var meal = new Meal({
-        category: "Fast Food",
-        name: "Coney",
-        notes: "Delish!",
-        tried: "yes"
-    });
-
-    var logView = new MealLog({
-        model: meal
-    });
-
-    logView.render();
-    notDeepEqual(logView._bindings, undefined);
-
-    logView.unbindModel();
-    deepEqual(logView._bindings, {});
-});
+}
