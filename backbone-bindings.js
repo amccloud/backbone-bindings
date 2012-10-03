@@ -168,7 +168,7 @@
         'radio': function(model, attribute, property){
             return {
                 get: ['change', function(){
-                    return this.find('input:checked').val();
+                    return this.find(':radio:checked').val();
                 }],
                 set: function(value){
                     this.find(":radio[value="+value+"]").attr('checked', true);
