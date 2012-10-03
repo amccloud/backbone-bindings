@@ -147,9 +147,9 @@
         },
         'text': function(model, attribute, property) {
             return {
-                get: ['change', function() {
+                get: function() {
                     return this.text();
-                }],
+                },
                 set: function(value) {
                     this.text(value);
                 }
@@ -157,9 +157,9 @@
         },
         'html': function(model, attribute, property) {
             return {
-                get: ['change', function() {
+                get: function() {
                     return this.html();
-                }],
+                },
                 set: function(value) {
                     this.html(value);
                 }
@@ -167,9 +167,9 @@
         },
         'radio': function(model, attribute, property){
             return {
-                get: ['change', function(){
+                get: function(){
                     return this.find(':radio:checked').val();
-                }],
+                },
                 set: function(value){
                     this.find(":radio[value="+value+"]").attr('checked', true);
                 }
@@ -188,9 +188,9 @@
         },
         'checked': function(model, attribute, property) {
             return {
-                get: ['change', function() {
+                get:  function() {
                     return this.prop('checked');
-                }],
+                },
                 set: function(value) {
                     this.prop('checked', !!value);
                 }
