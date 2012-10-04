@@ -1,4 +1,11 @@
-(function(_, Backbone) {
+(function (global, factory) {
+    // UMD header to define an AMD module and fall back to browser globals
+    if (typeof define === 'function' && define.amd) {
+        define(['underscore', 'backbone'], factory);
+    } else {
+        factory(global._, global.Backbone);
+    }
+}(this, function(_, Backbone) {
     var bindingSplitter = /^(\S+)\s*(.*)$/;
 
     _.extend(Backbone.View.prototype, {
@@ -205,4 +212,4 @@
         if ((object && object[prop]))
             return _.isFunction(object[prop]) ? object[prop]() : object[prop];
     };
-})(window._, window.Backbone);
+}));
