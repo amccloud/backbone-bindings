@@ -100,11 +100,16 @@ var MealLogView = Backbone.View.extend({
 
 ### Defining Get & Set Transformer ###
 ```javascript
-var yesNoTransformer = [function(value) {
-    return value === "yes";
-}, function(value) {
-    return (value) ? "yes" : "no";
-}];
+var yesNoTransformer = {
+    //transform to the element
+    set: function(value) {
+        return value === "yes";
+    }, 
+    //transform from the element
+    get: function(value) {
+        return (value) ? "yes" : "no";
+    }
+};
 
 var MealLogView = Backbone.View.extend({
     bindings: {
