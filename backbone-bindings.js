@@ -18,14 +18,25 @@
             // Clear any previous bindings for view.
             this.unbindModel();
 
-	    this._bindModel = model || this.model;
+    	    this._bindModel = model || this.model;
 
             _.each(bindings, function(attribute, binding) {
                 if (!_.isArray(attribute))
                     attribute = [attribute, {}];
 
                 if (_.isFunction(attribute[1]))
-                    attribute[1] = {set:attribute[1]};
+                    attribute[1] = {setEl:attribute[1]};
+
+                //if string add model set / get methods
+                if(_.isString(attribute[1])){
+                    var method = attribute[1];
+                    var modelAcc = function(){
+                        return this[method].apply(this, arguments);
+                    };
+
+                    attribute[1] = {set:modelAcc,
+                                get:modelAcc};
+                }
 
                 // Check to see if a binding is already bound to another attribute.
                 if (this._bindings[binding])
@@ -69,8 +80,10 @@
                     }, '', this);
 
                 // Default to identity transformer if not provided for attribute.
-                var setTransformer = attribute[1].set || identityTransformer,
-                    getTransformer = attribute[1].get || identityTransformer;
+                var setTransformer = attribute[1].setEl || identityTransformer,
+                    getTransformer = attribute[1].getEl || identityTransformer,
+                    modelSetter = attribute[1].get,
+                    modelGetter = attribute[1].set;
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...
@@ -88,18 +101,31 @@
                 var get = _.bind(function(event) {
                     // Get the property value from the binder's element.
                     // console.log(attribute[0], getTransformer);
-                    var value = getTransformer.call(this, accessors.get[1].call(el));
+                    var value = getTransformer.call(this, accessors.get[1].call(el)),
+                    extra = {
+                            el: this.$(event.srcElement)
+                        };
 
-                    this._bindModel.set(attribute[0], value, {
-                        el: this.$(event.srcElement)
-                    });
+                    if(modelSetter){
+                        modelSetter.call(this._bindModel, value, extra);
+                    } else {
+                        this._bindModel.set(attribute[0], value, extra);
+                    }
                 }, this);
 
                 if (accessors.set) {
                     this.model.on(setTrigger, set);
                     // Trigger the initial set callback manually so that the view is up
                     // to date with the model bound to it.
-                    set(this._bindModel, this._bindModel.get(attribute[0]));
+                    var getValue;
+
+                    if(modelGetter){
+                        getValue = modelGetter.call(this._bindModel);
+                    } else {
+                        getValue = this._bindModel.get(attribute[0]);
+                    }
+                    
+                    set(this._bindModel, getValue);
                 }
 
                 if (accessors.get[1])
