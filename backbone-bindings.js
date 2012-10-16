@@ -163,7 +163,7 @@
     });
 
     Backbone.View.Binders = {
-        'value': function(model, attribute, property) {
+        value: function(model, attribute, property) {
             return {
                 get: ['change keyup', function() {
                     return this.val();
@@ -173,7 +173,18 @@
                 }
             };
         },
-        'text': function(model, attribute, property) {
+        //same as value except it converts values to a number
+        number:function(model, attribute, property){
+            return {
+                get: ['change keyup', function() {
+                    return +this.val();
+                }],
+                set: function(value) {
+                    this.val(value);
+                }
+            };
+        },
+        text: function(model, attribute, property) {
             return {
                 get: function() {
                     return this.text();
@@ -183,7 +194,7 @@
                 }
             };
         },
-        'html': function(model, attribute, property) {
+        html: function(model, attribute, property) {
             return {
                 get: function() {
                     return this.html();
@@ -193,7 +204,7 @@
                 }
             };
         },
-        'radio': function(model, attribute, property){
+        radio: function(model, attribute, property){
             return {
                 get: function(){
                     return this.find(':radio:checked').val();
@@ -203,7 +214,7 @@
                 }
             };
         },
-        'class': function(model, attribute, property) {
+        class: function(model, attribute, property) {
             return {
                 set: function(value) {
                     if (this._previousClass)
@@ -214,7 +225,7 @@
                 }
             };
         },
-        'checked': function(model, attribute, property) {
+        checked: function(model, attribute, property) {
             return {
                 get:  function() {
                     return this.prop('checked');
@@ -224,7 +235,7 @@
                 }
             };
         },
-        '__attr__': function(model, attribute, property) {
+        __attr__: function(model, attribute, property) {
             return {
                 set: function(value) {
                     this.attr(property, value);
