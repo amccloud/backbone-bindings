@@ -2,14 +2,14 @@
     var bindingSplitter = /^(\S+)\s*(.*)$/;
 
     _.extend(Backbone.View.prototype, {
-        bindModel: function(bindings) {
+        bindModel: function(model, bindings) {
             // Bindings can be defined three different ways. It can be
             // defined on the view as an object or function under the key
             // 'bindings', or as an object passed to bindModel.
             bindings = bindings || getValue(this, 'bindings');
 
             // Skip if no bindings can be found or if the view has no model.
-            if (!bindings || !this.model)
+            if (!bindings || (!model && !this.model))
                 return;
 
             // Create the private bindings map if it doesn't exist.
@@ -18,12 +18,25 @@
             // Clear any previous bindings for view.
             this.unbindModel();
 
+    	    this._bindModel = model || this.model;
+
             _.each(bindings, function(attribute, binding) {
                 if (!_.isArray(attribute))
-                    attribute = [attribute, [null, null]];
+                    attribute = [attribute, {}];
 
-                if (!_.isArray(attribute[1]))
-                    attribute[1] = [attribute[1], null];
+                if (_.isFunction(attribute[1]))
+                    attribute[1] = {setEl:attribute[1]};
+
+                //if string add model set / get methods
+                if(_.isString(attribute[1])){
+                    var method = attribute[1];
+                    var modelAcc = function(){
+                        return this[method].apply(this, arguments);
+                    };
+
+                    attribute[1] = {set:modelAcc,
+                                get:modelAcc};
+                }
 
                 // Check to see if a binding is already bound to another attribute.
                 if (this._bindings[binding])
@@ -46,7 +59,7 @@
                     // 'set' must be a function and has one argument. `get` can either be
                     // a function or a list [events, function] .The context of both set and
                     // get is the views's $el.
-                    accessors = binder.call(this, this.model, attribute[0], property);
+                    accessors = binder.call(this, this._bindModel, attribute[0], property);
 
                 if (!accessors)
                     return;
@@ -67,12 +80,14 @@
                     }, '', this);
 
                 // Default to identity transformer if not provided for attribute.
-                var setTransformer = attribute[1][0] || identityTransformer,
-                    getTransformer = attribute[1][1] || identityTransformer;
+                var setTransformer = attribute[1].setEl || identityTransformer,
+                    getTransformer = attribute[1].getEl || identityTransformer,
+                    modelSetter = attribute[1].get,
+                    modelGetter = attribute[1].set;
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...
-                var set = _.bind(function(model, value, options) {
+                var set = _.bind(function(mod, value, options) {
                     // Skip if this callback was bound to the element that
                     // triggered the callback.
                     if (options && options.el && options.el.get(0) == el.get(0))
@@ -86,22 +101,35 @@
                 var get = _.bind(function(event) {
                     // Get the property value from the binder's element.
                     // console.log(attribute[0], getTransformer);
-                    var value = getTransformer.call(this, accessors.get[1].call(el));
+                    var value = getTransformer.call(this, accessors.get[1].call(el)),
+                    extra = {
+                            el: this.$(event.srcElement)
+                        };
 
-                    this.model.set(attribute[0], value, {
-                        el: this.$(event.srcElement)
-                    });
+                    if(modelSetter){
+                        modelSetter.call(this._bindModel, value, extra);
+                    } else {
+                        this._bindModel.set(attribute[0], value, extra);
+                    }
                 }, this);
 
                 if (accessors.set) {
                     this.model.on(setTrigger, set);
                     // Trigger the initial set callback manually so that the view is up
                     // to date with the model bound to it.
-                    set(this.model, this.model.get(attribute[0]));
+                    var getValue;
+
+                    if(modelGetter){
+                        getValue = modelGetter.call(this._bindModel);
+                    } else {
+                        getValue = this._bindModel.get(attribute[0]);
+                    }
+                    
+                    set(this._bindModel, getValue);
                 }
 
                 if (accessors.get[1])
-                    this.$el.on(getTrigger, selector, get);
+                    el.on(getTrigger, get);
 
                 // Save a reference to binding so that we can unbind it later.
                 this._bindings[binding] = {
@@ -117,7 +145,7 @@
         },
         unbindModel: function() {
             // Skip if view has been bound or doesn't have a model.
-            if (!this._bindings || !this.model)
+            if (!this._bindings || !this._bindModel)
                 return;
 
             _.each(this._bindings, function(binding, key) {
@@ -125,7 +153,7 @@
                     this.$el.off(binding.getTrigger, binding.selector);
 
                 if (binding.set)
-                    this.model.off(binding.setTrigger, binding.set);
+                    this._bindModel.off(binding.setTrigger, binding.set);
 
                 delete this._bindings[key];
             }, this);
@@ -135,7 +163,7 @@
     });
 
     Backbone.View.Binders = {
-        'value': function(model, attribute, property) {
+        value: function(model, attribute, property) {
             return {
                 get: ['change keyup', function() {
                     return this.val();
@@ -145,27 +173,48 @@
                 }
             };
         },
-        'text': function(model, attribute, property) {
+        //same as value except it converts values to a number
+        number:function(model, attribute, property){
             return {
-                get: ['change', function() {
-                    return this.text();
+                get: ['change keyup', function() {
+                    return +this.val();
                 }],
+                set: function(value) {
+                    this.val(value);
+                }
+            };
+        },
+        text: function(model, attribute, property) {
+            return {
+                get: function() {
+                    return this.text();
+                },
                 set: function(value) {
                     this.text(value);
                 }
             };
         },
-        'html': function(model, attribute, property) {
+        html: function(model, attribute, property) {
             return {
-                get: ['change', function() {
+                get: function() {
                     return this.html();
-                }],
+                },
                 set: function(value) {
                     this.html(value);
                 }
             };
         },
-        'class': function(model, attribute, property) {
+        radio: function(model, attribute, property){
+            return {
+                get: function(){
+                    return this.find(':radio:checked').val();
+                },
+                set: function(value){
+                    this.find(":radio[value="+value+"]").attr('checked', true);
+                }
+            };
+        },
+        class: function(model, attribute, property) {
             return {
                 set: function(value) {
                     if (this._previousClass)
@@ -176,17 +225,17 @@
                 }
             };
         },
-        'checked': function(model, attribute, property) {
+        checked: function(model, attribute, property) {
             return {
-                get: ['change', function() {
+                get:  function() {
                     return this.prop('checked');
-                }],
+                },
                 set: function(value) {
                     this.prop('checked', !!value);
                 }
             };
         },
-        '__attr__': function(model, attribute, property) {
+        __attr__: function(model, attribute, property) {
             return {
                 set: function(value) {
                     this.attr(property, value);

@@ -100,11 +100,16 @@ var MealLogView = Backbone.View.extend({
 
 ### Defining Get & Set Transformer ###
 ```javascript
-var yesNoTransformer = [function(value) {
-    return value === "yes";
-}, function(value) {
-    return (value) ? "yes" : "no";
-}];
+var yesNoTransformer = {
+    //transform model value to the element
+    setEl: function(value) {
+        return value === "yes";
+    }, 
+    //transform model value to the element
+    getEl: function(value) {
+        return (value) ? "yes" : "no";
+    }
+};
 
 var MealLogView = Backbone.View.extend({
     bindings: {
@@ -116,4 +121,53 @@ var MealLogView = Backbone.View.extend({
         return this.bindModel();
     }
 });
+```
+### Defining Custom Model Get & Set ###
+In some cases values are calculated on the fly based on model properties. Custom `get` and `set` methods can be created for models. This is a more flexible alternative to the transformers method.
+```javascript
+var Notes = Backbone.Model.extend({
+    
+    defaults:{
+        notes:"First note.\nSecond note.",
+        finished:"no"
+    }
+
+    total:function(){
+        return this.get('notes').split('\n').length;
+    },
+
+    finished:function(v){
+        if(!_.isUndefined(v)){
+            return this.set('finished', (v) ? "yes" : "no");
+        }
+        return this.get('finished') == "yes";
+    }
+
+});
+
+
+var MealLogView = Backbone.View.extend({
+    bindings: {
+        //will update total whenever notes changes
+        //'total' refers to the method on the model
+        'h2.total': ['notes', 'total'],
+
+        'checked input[name="finished"]':['finished', {
+            get:function(){
+                return this.get('finished') == "yes";
+            },
+            set:function(value, el){
+                this.set('finished', (value) ? "yes" : "no");
+            }
+        }]
+        //the models method finished can also be used:
+        //'checked input[name="finished"]':['finished', 'finished']
+    },
+
+    render: function() {
+        this.$el.html(this.template());
+        return this.bindModel();
+    }
+});
+
 ```
