@@ -6,7 +6,7 @@
             // Bindings can be defined three different ways. It can be
             // defined on the view as an object or function under the key
             // 'bindings', or as an object passed to bindModel.
-            bindings = bindings || getValue(this, 'bindings');
+            bindings = bindings || _.result(this, 'bindings');
 
             // Skip if no bindings can be found or if the view has no model.
             if (!bindings || !this.model)
@@ -67,8 +67,8 @@
                     }, '', this);
 
                 // Default to identity transformer if not provided for attribute.
-                var setTransformer = attribute[1][0] || identityTransformer,
-                    getTransformer = attribute[1][1] || identityTransformer;
+                var setTransformer = attribute[1][0] || _.identity,
+                    getTransformer = attribute[1][1] || _.identity;
 
                 // Create get and set callbacks so that we can reference the functions
                 // when it's time to unbind. 'set' for binding to the model events...
@@ -193,16 +193,5 @@
                 }
             };
         }
-    };
-
-    var identityTransformer = function(value) {
-        return value;
-    };
-
-    // Helper function from Backbone to get a value from a Backbone
-    // object as a property or as a function.
-    var getValue = function(object, prop) {
-        if ((object && object[prop]))
-            return _.isFunction(object[prop]) ? object[prop]() : object[prop];
     };
 })(window._, window.Backbone);
